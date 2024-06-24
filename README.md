@@ -88,6 +88,7 @@ pub fn reward_invite(
 Добавляем админа. Логика такая, что после голосования будет вызвана эта функция (только в случае успеха голосования)
 
 ```Rust
+/// Contract for adding new administrator
 pub fn add_administrator(
     deps: DepsMut,
     info: MessageInfo,
