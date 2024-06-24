@@ -15,7 +15,7 @@
 
 ### Выбор блокчейна
 
-- Tendermint (можем легко наладить связь с другими DAO)
+- Tendermint (можем легко наладить связь с другими DAO, Rust)
 
 ### Frontend and backend
 
