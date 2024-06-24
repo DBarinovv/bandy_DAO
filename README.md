@@ -53,3 +53,65 @@
 - повышение уровня в зависимости от посещений
 - глобальный рейтинг
 - награды самым активным
+
+## Примеры контрактов
+
+Вознаграждаем пригласившего:
+```Rust
+/// Contract for rewarding person who invited somebody
+pub fn reward_invite(
+    deps: DepsMut,
+    info: MessageInfo,
+    invitee: String,
+) -> StdResult<Response> {
+    // Check if registration is complete
+    let registered_users = REGISTERED_USERS.load(deps.storage)?;
+    if !registered_users.contains(&invitee) {
+        return Err(StdError::generic_err("Invitee not registered"));
+    }
+
+    let user_address = info.sender.to_string();
+    let mut user_info = USERS.may_load(deps.storage, user_address.clone())?.unwrap_or(TokenInfo {
+        governance_tokens: Uint128::zero(),
+        utility_tokens: Uint128::zero(),
+    });
+
+    user_info.utility_tokens += Uint128::from(1u128); // Get tokens for invitation
+    USERS.save(deps.storage, user_address, &user_info)?;
+
+    Ok(Response::new().add_attribute("action", "reward_invite"))
+}
+```
+
+Добавляем админа. Логика такая, что после голосования будет вызвана эта функция (только в случае успеха голосования)
+
+```Rust
+pub fn add_administrator(
+    deps: DepsMut,
+    info: MessageInfo,
+    new_admin: String,
+) -> StdResult<Response> {
+    let sender_address = info.sender.to_string();
+
+    // Check if sender is administrator
+    let mut administrators = ADMINISTRATORS.load(deps.storage)?;
+    if !administrators.contains(&sender_address) {
+        return Err(StdError::generic_err("Only administrators can add new administrators"));
+    }
+
+    // Check if admin is Professional of Coach
+    let role = ROLES.load(deps.storage, new_admin.clone())?;
+    if role != Role::Professional && role != Role::Coach {
+        return Err(StdError::generic_err("New administrator must be a Professional or a Coach"));
+    }
+
+    if !administrators.contains(&new_admin) {
+        administrators.push(new_admin.clone());
+        ADMINISTRATORS.save(deps.storage, &administrators)?;
+    }
+
+    Ok(Response::new()
+        .add_attribute("action", "add_administrator")
+        .add_attribute("new_admin", new_admin))
+}
+```
